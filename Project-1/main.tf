@@ -13,6 +13,7 @@ provider "aws" {
     secret_key = 
 }
 
+# Create VPC
 resource "aws_vpc" "prod-vpc" {
   cidr_block       = "10.0.0.0/16"
 
@@ -21,10 +22,12 @@ resource "aws_vpc" "prod-vpc" {
   }
 }
 
+# 2. Create Internet Gateway
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.prod-vpc.id
 }
 
+# 3. Create Custom Route Table 
 resource "aws_route_table" "prod-route-table" {
   vpc_id = aws_vpc.prod-vpc.id
 
@@ -43,13 +46,29 @@ resource "aws_route_table" "prod-route-table" {
   }
 }
 
+# Assign variable
+variable "subnet_prefix" {
+  description = "cidr block for the subnet"
+}
+
+# 4. Create subnets referencing tfvars
 resource "aws_subnet" "subnet-1" {
   vpc_id     = aws_vpc.prod-vpc.id
-  cidr_block = "10.0.1.0/24"
+  cidr_block = var.subnet_prefix[0].cidr_block
   availability_zone = "us-east-1a"
 
   tags = {
-    Name = "prod-subnet"
+    Name = var.subnet_prefix[0].name
+  }
+}
+
+resource "aws_subnet" "subnet-2" {
+  vpc_id     = aws_vpc.prod-vpc.id
+  cidr_block = var.subnet_prefix[1].cidr_block
+  availability_zone = "us-east-1a"
+
+  tags = {
+    Name = var.subnet_prefix[1].name
   }
 }
 
